@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 @Component
 public class StudentServiceImpl implements StudentService{
@@ -54,9 +55,15 @@ public class StudentServiceImpl implements StudentService{
     @Override
     public Boolean addScore(Long id, ScoreDto scoreDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        student.getScores().put(scoreDto.getExamName(), scoreDto.getScore());
-        studentRepository.save(student);
-        return true;
+        Map<String, Integer> scores = student.getScores();
+        if(scores.containsKey(scoreDto.getExamName())){
+            return false;
+        } else{
+            scores.put(scoreDto.getExamName(), scoreDto.getScore());
+            studentRepository.save(student);
+            return true;
+        }
+
     }
 
     @Override
