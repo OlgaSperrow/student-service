@@ -7,22 +7,29 @@ import ait.cohort55.student.dto.StudentDto;
 import ait.cohort55.student.dto.StudentUpdateDto;
 import ait.cohort55.student.dto.exeptions.StudentNotFoundException;
 import ait.cohort55.student.model.Student;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-@Component
-public class StudentServiceImpl implements StudentService{
-    @Autowired
+import java.util.stream.StreamSupport;
 
-    private StudentRepository studentRepository;
+@Service
+@RequiredArgsConstructor // только final поля
+public class StudentServiceImpl implements StudentService{
+   // @Autowired
+    private final StudentRepository studentRepository;
+
+   // public StudentServiceImpl(StudentRepository studentRepository) {
+      //  this.studentRepository = studentRepository;
+   // }
 
     @Override
     public Boolean addStudent(StudentAddDto studentAddDto) {
-        if(studentRepository.findById(studentAddDto.getId()).isPresent()){
+        if(studentRepository.existsById(studentAddDto.getId())){
             return false;
         }
         Student student = new Student(studentAddDto.getId(),studentAddDto.getName(),studentAddDto.getPassword());
@@ -40,14 +47,18 @@ public class StudentServiceImpl implements StudentService{
     public StudentDto removeStudent(Long id) {
         StudentDto student = findStudent(id);
         studentRepository.deleteById(id);
-        return new StudentDto(student.getId(), student.getName(), student.getScores());
+        return new StudentDto(id, student.getName(), student.getScores());
     }
 
     @Override
     public StudentAddDto updateStudent(Long id, StudentUpdateDto studentUpdateDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        student.setName(studentUpdateDto.getName());
-        student.setPassword(studentUpdateDto.getPassword());
+        if (studentUpdateDto.getName() != null) {
+            student.setName(studentUpdateDto.getName());
+        }
+        if (studentUpdateDto.getPassword() != null) {
+            student.setPassword(studentUpdateDto.getPassword());
+        }
         studentRepository.save(student);
         return new StudentAddDto(student.getId(), student.getName(), student.getPassword());
     }
@@ -55,48 +66,31 @@ public class StudentServiceImpl implements StudentService{
     @Override
     public Boolean addScore(Long id, ScoreDto scoreDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        Map<String, Integer> scores = student.getScores();
-        if(scores.containsKey(scoreDto.getExamName())){
-            return false;
-        } else{
-            scores.put(scoreDto.getExamName(), scoreDto.getScore());
-            studentRepository.save(student);
-            return true;
-        }
-
+        boolean res =student.addScore(scoreDto.getExamName(), scoreDto.getScore());
+        studentRepository.save(student);
+        return res;
     }
 
     @Override
     public List<StudentDto> findAllStudentsByName(String name) {
-        List<StudentDto> studentDtos = new ArrayList<>();
-        for(Student student : studentRepository.findAll()){
-            if(student.getName().equals(name)){
-                studentDtos.add(new StudentDto(student.getId(), student.getName(), student.getScores()));
-            }
-        }
-        return studentDtos;
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> name.equalsIgnoreCase(s.getName()))
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
     }
 
     @Override
     public Long getStudentsQuantityByName(Set<String> names) {
-        long count = 0;
-        for(Student student : studentRepository.findAll()){
-            if(names.contains(student.getName())){
-                count++;
-            }
-        }
-        return count;
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> names.contains(s.getName()))
+                .count();
     }
 
     @Override
-    public List<StudentDto> findStudentsByExamNameMinScore(String examName, Integer minScore) {
-        List<StudentDto> studentDtos = new ArrayList<>();
-        for(Student student : studentRepository.findAll()){
-            int score = student.getScores().get(examName);
-            if(score >= minScore){
-                studentDtos.add(new StudentDto(student.getId(), student.getName(), student.getScores()));
-            }
-        }
-        return studentDtos;
+    public List<StudentDto> findStudentsByExamNameMinScore(String exam, Integer minScore) {
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> s.getScores().containsKey(exam) && s.getScores().get(exam) > minScore)
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
     }
 }
