@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.util.HashMap;
 import java.util.Map;
+
 @Getter
 @Document(collection = "students")
 public class Student {
@@ -23,12 +23,10 @@ public class Student {
         this.name = name;
         this.password = password;
         scores = new HashMap<>();
-
-
     }
 
-    public boolean addScore (String exam, int score){
+    public boolean addScore(String exam, int score) {
         return scores.put(exam, score) == null;
     }
-
 }
+

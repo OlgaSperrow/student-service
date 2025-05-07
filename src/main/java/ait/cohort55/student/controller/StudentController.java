@@ -6,18 +6,14 @@ import ait.cohort55.student.dto.StudentDto;
 import ait.cohort55.student.dto.StudentUpdateDto;
 import ait.cohort55.student.service.StudentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 
 @RestController
 @RequiredArgsConstructor
 public class StudentController {
-   // @Autowired
-
     private final StudentService studentService;
 
     @PostMapping("/student")
@@ -46,12 +42,13 @@ public class StudentController {
     }
 
     @GetMapping("/students/name/{name}")
-    public List<StudentDto> findAllStudentsByName(@PathVariable String name) {
-        return studentService.findAllStudentsByName(name);
+    public List<StudentDto> findStudentsByName(@PathVariable String name) {
+        return studentService.findStudentsByName(name);
     }
-@GetMapping("/quantity/students")
-    public Long getStudentsQuantityByName(@RequestParam Set<String> names) {
-        return studentService.getStudentsQuantityByName(new HashSet<>(names));
+
+    @GetMapping("/quantity/students")
+    public Long getStudentsQuantityByNames(@RequestParam List<String> names) {
+        return studentService.getStudentsQuantityByNames(new HashSet<>(names));
     }
 
     @GetMapping("/students/exam/{exam}/minscore/{minScore}")

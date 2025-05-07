@@ -7,9 +7,7 @@ import ait.cohort55.student.dto.StudentDto;
 import ait.cohort55.student.dto.StudentUpdateDto;
 import ait.cohort55.student.dto.exeptions.StudentNotFoundException;
 import ait.cohort55.student.model.Student;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
@@ -18,21 +16,16 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 
 @Service
-@RequiredArgsConstructor // только final поля
-public class StudentServiceImpl implements StudentService{
-   // @Autowired
+@RequiredArgsConstructor
+public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
-
-   // public StudentServiceImpl(StudentRepository studentRepository) {
-      //  this.studentRepository = studentRepository;
-   // }
 
     @Override
     public Boolean addStudent(StudentAddDto studentAddDto) {
-        if(studentRepository.existsById(studentAddDto.getId())){
+        if (studentRepository.existsById(studentAddDto.getId())) {
             return false;
         }
-        Student student = new Student(studentAddDto.getId(),studentAddDto.getName(),studentAddDto.getPassword());
+        Student student = new Student(studentAddDto.getId(), studentAddDto.getName(), studentAddDto.getPassword());
         studentRepository.save(student);
         return true;
     }
@@ -40,12 +33,12 @@ public class StudentServiceImpl implements StudentService{
     @Override
     public StudentDto findStudent(Long id) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        return student == null ? null : new StudentDto(student.getId(), student.getName(), student.getScores());
+        return new StudentDto(student.getId(), student.getName(), student.getScores());
     }
 
     @Override
     public StudentDto removeStudent(Long id) {
-        StudentDto student = findStudent(id);
+        Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
         studentRepository.deleteById(id);
         return new StudentDto(id, student.getName(), student.getScores());
     }
@@ -66,21 +59,20 @@ public class StudentServiceImpl implements StudentService{
     @Override
     public Boolean addScore(Long id, ScoreDto scoreDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        boolean res =student.addScore(scoreDto.getExamName(), scoreDto.getScore());
+        boolean res = student.addScore(scoreDto.getExamName(), scoreDto.getScore());
         studentRepository.save(student);
         return res;
     }
 
     @Override
-    public List<StudentDto> findAllStudentsByName(String name) {
-        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
-                .filter(s -> name.equalsIgnoreCase(s.getName()))
+    public List<StudentDto> findStudentsByName(String name) {
+        return studentRepository.findByNameIgnoreCase(name)
                 .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
                 .toList();
     }
 
     @Override
-    public Long getStudentsQuantityByName(Set<String> names) {
+    public Long getStudentsQuantityByNames(Set<String> names) {
         return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
                 .filter(s -> names.contains(s.getName()))
                 .count();

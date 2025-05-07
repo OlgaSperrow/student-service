@@ -7,6 +7,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface StudentRepository extends CrudRepository<Student, Long> {
-    Stream<Student> findStudentByNameIgnoreCase(String name);
-
+    Stream<Student> findByNameIgnoreCase(String name);
 }
+
